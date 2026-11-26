@@ -6,6 +6,7 @@
 
 *A love for form, in every crumb. Zero frameworks. Pure WebGL1 GLSL, parametric 3D SVG drafting, 6-act scroll choreography, and a deterministic 25-plate Three.js PBR photography pipeline — shipped in ~27 KB gzipped.*
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-vela--atelier.pages.dev-b8925a?style=for-the-badge&logo=cloudflarepages&logoColor=0f1c17)](https://vela-atelier.pages.dev/)
 [![Vite 6](https://img.shields.io/badge/Vite-6.4-0f1c17?style=for-the-badge&logo=vite&logoColor=b8925a)](https://vite.dev/)
 [![WebGL1 GLSL](https://img.shields.io/badge/WebGL1-GLSL_Fluid_&_SDF-0f1c17?style=for-the-badge&logo=webgl&logoColor=f3efe6)](./src/modules/hero-webgl.js)
 [![Three.js PBR](https://img.shields.io/badge/Three.js-Headless_PBR_Studio-0f1c17?style=for-the-badge&logo=threedotjs&logoColor=b8925a)](./scripts/studio-renderer.html)
