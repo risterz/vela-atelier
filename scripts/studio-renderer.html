@@ -1,0 +1,1140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>VELA DONUT V — PBR Patisserie Studio Renderer</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<script type="module">
+import * as THREE from '../node_modules/three/build/three.module.js'
+
+// ---------- Procedural Culinary & Architectural Textures ----------
+function makeBriocheTextures() {
+  // UV.y wraps around the tube cross-section: 0 & 1 = outer equator, 0.25 = top crown, 0.5 = inner hole, 0.75 = bottom
+  const w = 512, h = 512
+  const colC = document.createElement('canvas')
+  colC.width = w; colC.height = h
+  const ctx = colC.getContext('2d')
+
+  // Warm golden-amber fried brioche with authentic paler creamy proof-line equator ring!
+  const grad = ctx.createLinearGradient(0, 0, 0, h)
+  grad.addColorStop(0.00, '#ebd4a7') // pale proof-line equator (outer)
+  grad.addColorStop(0.06, '#d99e52')
+  grad.addColorStop(0.24, '#b86c28') // rich golden baked top dome
+  grad.addColorStop(0.44, '#d99c50')
+  grad.addColorStop(0.50, '#e8cf9f') // inner hole lighter proof-line
+  grad.addColorStop(0.56, '#d89a4e')
+  grad.addColorStop(0.76, '#b56a27') // golden bottom dome
+  grad.addColorStop(0.94, '#daa156')
+  grad.addColorStop(1.00, '#ebd4a7')
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, w, h)
+
+  // Soft toasted mottling + micro porous crumb grain
+  for (let i = 0; i < 160; i++) {
+    const x = Math.random() * w, y = Math.random() * h, r = 10 + Math.random() * 44
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r)
+    const dark = Math.random() > 0.45 ? '138,72,22' : '244,218,168'
+    g.addColorStop(0, `rgba(${dark},0.09)`)
+    g.addColorStop(1, `rgba(${dark},0)`)
+    ctx.fillStyle = g
+    ctx.fillRect(x - r, y - r, r * 2, r * 2)
+  }
+
+  const bumpC = document.createElement('canvas')
+  bumpC.width = w; bumpC.height = h
+  const bctx = bumpC.getContext('2d')
+  bctx.fillStyle = '#808080'
+  bctx.fillRect(0, 0, w, h)
+  const bimg = bctx.getImageData(0, 0, w, h)
+  const cimg = ctx.getImageData(0, 0, w, h)
+  for (let i = 0; i < bimg.data.length; i += 4) {
+    const grain = (Math.random() - 0.5) * 42
+    const bv = Math.min(255, Math.max(0, 128 + grain))
+    bimg.data[i] = bimg.data[i + 1] = bimg.data[i + 2] = bv
+    bimg.data[i + 3] = 255
+    const cg = (Math.random() - 0.5) * 14
+    cimg.data[i] = Math.min(255, Math.max(0, cimg.data[i] + cg))
+    cimg.data[i + 1] = Math.min(255, Math.max(0, cimg.data[i + 1] + cg * 0.85))
+    cimg.data[i + 2] = Math.min(255, Math.max(0, cimg.data[i + 2] + cg * 0.65))
+  }
+  bctx.putImageData(bimg, 0, 0)
+  ctx.putImageData(cimg, 0, 0)
+
+  const map = new THREE.CanvasTexture(colC)
+  map.colorSpace = THREE.SRGBColorSpace
+  map.wrapS = THREE.RepeatWrapping; map.wrapT = THREE.RepeatWrapping
+
+  const bump = new THREE.CanvasTexture(bumpC)
+  bump.wrapS = THREE.RepeatWrapping; bump.wrapT = THREE.RepeatWrapping
+  return { map, bump }
+}
+
+function makeVanillaSpeckTexture() {
+  const c = document.createElement('canvas')
+  c.width = 512; c.height = 512
+  const ctx = c.getContext('2d')
+  ctx.fillStyle = '#f2e6cf'
+  ctx.fillRect(0, 0, 512, 512)
+  // Authentic tiny Madagascar vanilla bean specks
+  for (let i = 0; i < 420; i++) {
+    const x = Math.random() * 512, y = Math.random() * 512
+    const r = 0.6 + Math.random() * 1.4
+    ctx.fillStyle = `rgba(48,34,22,${0.32 + Math.random() * 0.48})`
+    ctx.beginPath()
+    ctx.arc(x, y, r, 0, Math.PI * 2)
+    ctx.fill()
+  }
+  const tex = new THREE.CanvasTexture(c)
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping
+  return tex
+}
+
+function makePlasterTexture(baseHex = '#ddd6c8', grain = 10) {
+  const c = document.createElement('canvas')
+  c.width = 512; c.height = 512
+  const ctx = c.getContext('2d')
+  ctx.fillStyle = baseHex
+  ctx.fillRect(0, 0, 512, 512)
+  for (let i = 0; i < 75; i++) {
+    const x = Math.random() * 512, y = Math.random() * 512, r = 45 + Math.random() * 150
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r)
+    const bright = Math.random() > 0.5 ? '255,252,246' : '118,110,98'
+    g.addColorStop(0, `rgba(${bright},0.05)`)
+    g.addColorStop(1, `rgba(${bright},0)`)
+    ctx.fillStyle = g
+    ctx.fillRect(x - r, y - r, r * 2, r * 2)
+  }
+  const img = ctx.getImageData(0, 0, 512, 512)
+  for (let i = 0; i < img.data.length; i += 4) {
+    const n = (Math.random() - 0.5) * grain
+    img.data[i] = Math.min(255, Math.max(0, img.data[i] + n))
+    img.data[i + 1] = Math.min(255, Math.max(0, img.data[i + 1] + n))
+    img.data[i + 2] = Math.min(255, Math.max(0, img.data[i + 2] + n))
+  }
+  ctx.putImageData(img, 0, 0)
+  const tex = new THREE.CanvasTexture(c)
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping
+  return tex
+}
+
+function makeWoodTexture() {
+  const c = document.createElement('canvas')
+  c.width = 512; c.height = 512
+  const ctx = c.getContext('2d')
+  ctx.fillStyle = '#3d2c22'
+  ctx.fillRect(0, 0, 512, 512)
+  for (let x = 0; x < 512; x++) {
+    const wave = Math.sin(x * 0.08) * 9 + Math.sin(x * 0.25) * 4 + (Math.random() - 0.5) * 5
+    ctx.fillStyle = `rgb(${Math.min(255,Math.max(0,65+wave))|0},${Math.min(255,Math.max(0,47+wave*0.72))|0},${Math.min(255,Math.max(0,35+wave*0.52))|0})`
+    ctx.fillRect(x, 0, 1, 512)
+  }
+  ctx.fillStyle = 'rgba(18,12,8,0.62)'
+  for (let x = 0; x < 512; x += 64) ctx.fillRect(x, 0, 2, 512)
+  const tex = new THREE.CanvasTexture(c)
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping
+  return tex
+}
+
+function makeStudioEnv(renderer, mode = 'warm') {
+  const w = 1024, h = 512
+  const c = document.createElement('canvas')
+  c.width = w; c.height = h
+  const ctx = c.getContext('2d')
+
+  if (mode === 'hero' || mode === 'glint') {
+    const bg = ctx.createLinearGradient(0, 0, 0, h)
+    bg.addColorStop(0, '#07100c')
+    bg.addColorStop(0.45, '#192620')
+    bg.addColorStop(0.72, '#3b4840')
+    bg.addColorStop(1, '#1d2621')
+    ctx.fillStyle = bg
+    ctx.fillRect(0, 0, w, h)
+
+    // Overhead softbox rectangles -> appetizing specular highlights on mirror glaze!
+    const boxes = [
+      { x: 110, y: 40, w: 210, h: 160, col: 'rgba(255,250,240,0.96)' },
+      { x: 460, y: 30, w: 220, h: 140, col: 'rgba(255,246,232,0.92)' },
+      { x: 770, y: 60, w: 170, h: 170, col: 'rgba(232,240,234,0.85)' },
+    ]
+    for (const b of boxes) {
+      const g = ctx.createRadialGradient(b.x + b.w/2, b.y + b.h/2, 10, b.x + b.w/2, b.y + b.h/2, b.w * 0.65)
+      g.addColorStop(0, b.col)
+      g.addColorStop(0.6, b.col)
+      g.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.fillStyle = g
+      ctx.fillRect(b.x - 40, b.y - 40, b.w + 80, b.h + 80)
+    }
+  } else {
+    const bg = ctx.createLinearGradient(0, 0, 0, h)
+    bg.addColorStop(0, '#d8d0c4')
+    bg.addColorStop(0.46, '#f4efe6')
+    bg.addColorStop(0.76, '#b8afa2')
+    bg.addColorStop(1, '#7c746a')
+    ctx.fillStyle = bg
+    ctx.fillRect(0, 0, w, h)
+    for (const [x, y, r] of [[240, 120, 150], [640, 105, 165], [880, 160, 120]]) {
+      const g = ctx.createRadialGradient(x, y, 12, x, y, r)
+      g.addColorStop(0, 'rgba(255,253,248,0.98)')
+      g.addColorStop(0.55, 'rgba(255,250,242,0.75)')
+      g.addColorStop(1, 'rgba(255,250,242,0)')
+      ctx.fillStyle = g
+      ctx.fillRect(x - r, y - r, r * 2, r * 2)
+    }
+  }
+
+  const tex = new THREE.CanvasTexture(c)
+  tex.mapping = THREE.EquirectangularReflectionMapping
+  tex.colorSpace = THREE.SRGBColorSpace
+  const pmrem = new THREE.PMREMGenerator(renderer)
+  pmrem.compileEquirectangularShader()
+  const env = pmrem.fromEquirectangular(tex).texture
+  pmrem.dispose(); tex.dispose()
+  return env
+}
+
+// ---------- Shared Materials ----------
+const briocheTex = makeBriocheTextures()
+const vanillaTex = makeVanillaSpeckTexture()
+
+function briocheMat() {
+  return new THREE.MeshStandardMaterial({
+    map: briocheTex.map,
+    bumpMap: briocheTex.bump,
+    bumpScale: 0.012,
+    roughness: 0.72,
+    metalness: 0.0,
+    envMapIntensity: 0.55,
+  })
+}
+
+function glazeMat(flavor) {
+  if (flavor === 'matcha') {
+    return new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#476b44'),
+      roughness: 0.14,
+      metalness: 0.02,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.06,
+      envMapIntensity: 1.35,
+    })
+  }
+  if (flavor === 'cacao') {
+    return new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#23140f'),
+      roughness: 0.10,
+      metalness: 0.04,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.04,
+      envMapIntensity: 1.55,
+    })
+  }
+  // Tahitian Vanilla Bean Mirror Glaze
+  return new THREE.MeshPhysicalMaterial({
+    map: vanillaTex,
+    color: new THREE.Color('#f7efe0'),
+    roughness: 0.12,
+    metalness: 0.02,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.05,
+    envMapIntensity: 1.35,
+  })
+}
+
+function brassMat() {
+  return new THREE.MeshStandardMaterial({
+    color: new THREE.Color('#c8a76d'),
+    metalness: 0.90,
+    roughness: 0.24,
+    envMapIntensity: 1.25,
+  })
+}
+
+function ceramicMat(hex = '#e9e4da') {
+  return new THREE.MeshStandardMaterial({
+    color: new THREE.Color(hex),
+    roughness: 0.42,
+    metalness: 0.02,
+    envMapIntensity: 0.75,
+  })
+}
+
+// ---------- Parametric 3D Artisanal Donut Builder ----------
+const DONUT_SPECS = {
+  1: { R: 0.62, r: 0.30, squash: 0.82, flavor: 'matcha', drips: 6 },
+  2: { R: 0.70, r: 0.34, squash: 0.84, flavor: 'cacao',  drips: 7 },
+  3: { R: 0.78, r: 0.38, squash: 0.86, flavor: 'vanilla', drips: 8 },
+}
+
+// Build organic sculpted brioche dough torus (horizontal in XZ plane, resting on y=0)
+function buildDoughGeometry(R, r, squash) {
+  const uSegs = 96, vSegs = 48
+  const geo = new THREE.TorusGeometry(R, r, vSegs, uSegs)
+  // Rotate so donut lies flat on XZ plane!
+  geo.rotateX(Math.PI / 2)
+  const pos = geo.attributes.position
+  const uv = geo.attributes.uv
+  for (let i = 0; i < pos.count; i++) {
+    let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i)
+    const ang = Math.atan2(z, x)
+    // Subtle hand-proofed organic irregularity
+    const puff = 1.0 + Math.sin(ang * 3.0) * 0.016 + Math.cos(ang * 5.0 + 0.8) * 0.012
+    x *= puff; z *= puff
+    y *= squash
+    // Slightly flatten very bottom resting contact patch
+    if (y < -r * squash * 0.82) y = -r * squash * 0.82 + (y + r * squash * 0.82) * 0.28
+    pos.setXYZ(i, x, y + r * squash * 0.88, z)
+  }
+  geo.computeVertexNormals()
+  return geo
+}
+
+// Build contoured organic dripping mirror glaze cap resting snugly on the upper donut dome
+function buildGlazeGeometry(R, r, squash, drips) {
+  const uSegs = 96, vSegs = 28
+  const positions = []
+  const uvs = []
+  const indices = []
+
+  const rOuter = r * 1.045 // plump glossy glaze thickness
+  for (let iu = 0; iu <= uSegs; iu++) {
+    const u = (iu / uSegs) * Math.PI * 2
+    // Organic drip length around outer edge & softer inner hole edge
+    const outerDrip = 0.08 + Math.sin(u * drips) * 0.24 + Math.cos(u * (drips - 3) + 1.2) * 0.13 + Math.sin(u * (drips + 4)) * 0.06
+    const innerDrip = Math.PI - (0.36 + Math.sin(u * (drips - 1) + 0.5) * 0.16)
+    const vStart = outerDrip
+    const vEnd = innerDrip
+
+    for (let iv = 0; iv <= vSegs; iv++) {
+      const f = iv / vSegs
+      const v = vStart + f * (vEnd - vStart)
+      // Plump rounded meniscus bead right at glaze skirt edges (f near 0 or 1)
+      const edgeCurl = Math.sin(f * Math.PI)
+      const thick = 1.0 + 0.025 * Math.pow(edgeCurl, 0.35) - (1.0 - edgeCurl) * 0.032
+      const puff = 1.0 + Math.sin(u * 3.0) * 0.016 + Math.cos(u * 5.0 + 0.8) * 0.012
+      const rad = (R + rOuter * thick * Math.cos(v)) * puff
+      const x = rad * Math.cos(u)
+      const z = rad * Math.sin(u)
+      const y = rOuter * thick * squash * Math.sin(v) + r * squash * 0.88
+      positions.push(x, y, z)
+      uvs.push((iu / uSegs) * 2.0, f)
+    }
+  }
+
+  for (let iu = 0; iu < uSegs; iu++) {
+    for (let iv = 0; iv < vSegs; iv++) {
+      const a = iu * (vSegs + 1) + iv
+      const b = (iu + 1) * (vSegs + 1) + iv
+      const c = (iu + 1) * (vSegs + 1) + (iv + 1)
+      const d = iu * (vSegs + 1) + (iv + 1)
+      indices.push(a, d, b, b, d, c)
+    }
+  }
+
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+  geo.setIndex(indices)
+  geo.computeVertexNormals()
+  return geo
+}
+
+// Build artisanal toppings nestled cleanly along the top crown of the mirror glaze
+function buildToppings(R, r, squash, flavor) {
+  const g = new THREE.Group()
+  const baseY = r * squash * 0.88
+
+  if (flavor === 'matcha') {
+    // Crushed roasted Sicilian pistachio shards + delicate toasted white sesame pearls
+    const pistMat1 = new THREE.MeshStandardMaterial({ color: '#8ab054', roughness: 0.58 })
+    const pistMat2 = new THREE.MeshStandardMaterial({ color: '#61823c', roughness: 0.62 })
+    const sesMat = new THREE.MeshStandardMaterial({ color: '#f4ecd8', roughness: 0.42 })
+    const chipGeo = new THREE.DodecahedronGeometry(0.022, 0)
+    for (let i = 0; i < 62; i++) {
+      const s1 = Math.sin(i * 19.31) * 43758.5453; const r1 = s1 - Math.floor(s1)
+      const s2 = Math.sin(i * 73.17) * 43758.5453; const r2 = s2 - Math.floor(s2)
+      const u = r1 * Math.PI * 2
+      const v = Math.PI * (0.28 + r2 * 0.44)
+      const rad = R + r * 1.07 * Math.cos(v)
+      const m = new THREE.Mesh(chipGeo, i % 5 === 0 ? sesMat : i % 2 === 0 ? pistMat1 : pistMat2)
+      m.position.set(rad * Math.cos(u), baseY + r * 1.07 * squash * Math.sin(v), rad * Math.sin(u))
+      m.scale.set(0.6 + r1 * 0.9, 0.35 + r2 * 0.4, 0.7 + r2 * 0.8)
+      m.rotation.set(r1 * 4, r2 * 5, r1 * 3)
+      g.add(m)
+    }
+  } else if (flavor === 'cacao') {
+    // Toasted Piedmont hazelnut nibs + fine dark cacao crumble + warm caramel glaze drizzle
+    const nutMat = new THREE.MeshStandardMaterial({ color: '#cfa166', roughness: 0.52 })
+    const nibMat = new THREE.MeshStandardMaterial({ color: '#2b1a14', roughness: 0.45 })
+    const chipGeo = new THREE.DodecahedronGeometry(0.025, 0)
+    for (let i = 0; i < 58; i++) {
+      const s1 = Math.sin(i * 23.71) * 43758.5453; const r1 = s1 - Math.floor(s1)
+      const s2 = Math.sin(i * 61.13) * 43758.5453; const r2 = s2 - Math.floor(s2)
+      const u = r1 * Math.PI * 2
+      const v = Math.PI * (0.26 + r2 * 0.46)
+      const rad = R + r * 1.07 * Math.cos(v)
+      const m = new THREE.Mesh(chipGeo, i % 3 === 0 ? nibMat : nutMat)
+      m.position.set(rad * Math.cos(u), baseY + r * 1.07 * squash * Math.sin(v), rad * Math.sin(u))
+      m.scale.set(0.7 + r1 * 0.8, 0.4 + r2 * 0.4, 0.7 + r2 * 0.7)
+      m.rotation.set(r1 * 4, r2 * 5, r1 * 3)
+      g.add(m)
+    }
+  } else {
+    // Tahitian Vanilla Gold: irregular torn 24k gold-leaf flakes + smooth rounded artisan caramel drizzle
+    const goldMat = new THREE.MeshStandardMaterial({
+      color: '#e8c264',
+      metalness: 0.96,
+      roughness: 0.18,
+      side: THREE.DoubleSide,
+      envMapIntensity: 1.9,
+    })
+    // Organic asymmetric torn gold-leaf foil polygon (not a flat rectangle!)
+    const foilShape = new THREE.Shape()
+    foilShape.moveTo(-0.032, -0.018)
+    foilShape.lineTo(0.012, -0.026)
+    foilShape.lineTo(0.036, -0.004)
+    foilShape.lineTo(0.022, 0.024)
+    foilShape.lineTo(-0.014, 0.028)
+    foilShape.lineTo(-0.035, 0.008)
+    foilShape.closePath()
+    const leafGeo = new THREE.ShapeGeometry(foilShape)
+    for (let i = 0; i < 24; i++) {
+      const s1 = Math.sin(i * 31.17) * 43758.5453; const r1 = s1 - Math.floor(s1)
+      const s2 = Math.sin(i * 89.43) * 43758.5453; const r2 = s2 - Math.floor(s2)
+      const u = (i / 24) * Math.PI * 2 + (r1 - 0.5) * 0.24
+      const v = Math.PI * (0.35 + r2 * 0.30)
+      const rad = R + r * 1.076 * Math.cos(v)
+      const leaf = new THREE.Mesh(leafGeo, goldMat)
+      const px = rad * Math.cos(u), py = baseY + r * 1.076 * squash * Math.sin(v), pz = rad * Math.sin(u)
+      leaf.position.set(px, py, pz)
+      leaf.lookAt(px * 1.25, py + 1.4, pz * 1.25)
+      leaf.rotateZ(r1 * Math.PI * 2)
+      leaf.scale.set(0.55 + r1 * 0.95, 0.5 + r2 * 0.85, 1)
+      g.add(leaf)
+    }
+
+    // Lush, smooth liquid salted-caramel double ribbon (high-res rounded curves, zero sharp spikes!)
+    const caramelMat = new THREE.MeshPhysicalMaterial({
+      color: '#9c561a',
+      roughness: 0.08,
+      metalness: 0.02,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.04,
+      envMapIntensity: 1.45,
+    })
+    for (const [phase, freq, amp, radTube] of [
+      [0.0, 7.0, 0.145, 0.0135],
+      [Math.PI, 7.0, 0.115, 0.0095],
+    ]) {
+      const pts = []
+      const N = 280
+      for (let i = 0; i < N; i++) {
+        const u = (i / N) * Math.PI * 2
+        const v = Math.PI * (0.5 + Math.sin(u * freq + phase) * amp)
+        const puff = 1.0 + Math.sin(u * 3.0) * 0.016 + Math.cos(u * 5.0 + 0.8) * 0.012
+        const rad = (R + r * 1.066 * Math.cos(v)) * puff
+        pts.push(new THREE.Vector3(rad * Math.cos(u), baseY + r * 1.066 * squash * Math.sin(v), rad * Math.sin(u)))
+      }
+      const curve = new THREE.CatmullRomCurve3(pts, true, 'centripetal')
+      const drizzle = new THREE.Mesh(new THREE.TubeGeometry(curve, 320, radTube, 10, true), caramelMat)
+      g.add(drizzle)
+    }
+  }
+  return g
+}
+
+function buildDonutV({
+  size = 3,
+  includeGlaze = true,
+  holdoutDough = false,
+  flavorOverride = null,
+} = {}) {
+  const s = DONUT_SPECS[size] || DONUT_SPECS[3]
+  const flavor = flavorOverride || s.flavor
+  const root = new THREE.Group()
+
+  const doughM = holdoutDough
+    ? new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true })
+    : briocheMat()
+  const dough = new THREE.Mesh(buildDoughGeometry(s.R, s.r, s.squash), doughM)
+  dough.castShadow = !holdoutDough
+  dough.receiveShadow = !holdoutDough
+  root.add(dough)
+
+  if (includeGlaze) {
+    const glaze = new THREE.Mesh(buildGlazeGeometry(s.R, s.r, s.squash, s.drips), glazeMat(flavor))
+    glaze.castShadow = !holdoutDough
+    glaze.receiveShadow = true
+    root.add(glaze)
+    root.add(buildToppings(s.R, s.r, s.squash, flavor))
+  }
+
+  return root
+}
+
+function makeCraquelinTexture() {
+  const c = document.createElement('canvas')
+  c.width = 512; c.height = 512
+  const ctx = c.getContext('2d')
+  const g = ctx.createLinearGradient(0, 0, 0, 512)
+  g.addColorStop(0, '#c88038')
+  g.addColorStop(0.45, '#d9984c')
+  g.addColorStop(0.82, '#be7029')
+  g.addColorStop(1, '#8c4918')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, 512, 512)
+  // Soft baked brown-sugar craquelin mottling & fine crystallized sugar grain
+  for (let i = 0; i < 220; i++) {
+    const x = Math.random() * 512, y = Math.random() * 512, r = 6 + Math.random() * 24
+    const rg = ctx.createRadialGradient(x, y, 0, x, y, r)
+    const col = Math.random() > 0.45 ? '136,68,20' : '248,220,172'
+    rg.addColorStop(0, `rgba(${col},0.16)`)
+    rg.addColorStop(1, `rgba(${col},0)`)
+    ctx.fillStyle = rg
+    ctx.fillRect(x - r, y - r, r * 2, r * 2)
+  }
+  const img = ctx.getImageData(0, 0, 512, 512)
+  for (let i = 0; i < img.data.length; i += 4) {
+    const n = (Math.random() - 0.5) * 26
+    img.data[i] = Math.min(255, Math.max(0, img.data[i] + n))
+    img.data[i + 1] = Math.min(255, Math.max(0, img.data[i + 1] + n * 0.85))
+    img.data[i + 2] = Math.min(255, Math.max(0, img.data[i + 2] + n * 0.65))
+  }
+  ctx.putImageData(img, 0, 0)
+  const tex = new THREE.CanvasTexture(c)
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping
+  return tex
+}
+const craqTex = makeCraquelinTexture()
+
+// Companion 02 CHOUX V (sculptural golden craquelin cream puff)
+function buildChouxV() {
+  const g = new THREE.Group()
+  // Crispy textured craquelin dome
+  const craqGeo = new THREE.SphereGeometry(0.72, 64, 48)
+  const pos = craqGeo.attributes.position
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i)
+    const bump = 1.0 + Math.sin(x * 16) * Math.cos(z * 16) * 0.018 + Math.sin(y * 14) * 0.012
+    pos.setXYZ(i, x * bump, Math.max(-0.56, y * 0.84 * bump) + 0.56, z * bump)
+  }
+  craqGeo.computeVertexNormals()
+  const body = new THREE.Mesh(craqGeo, new THREE.MeshStandardMaterial({
+    map: craqTex,
+    bumpMap: briocheTex.bump,
+    bumpScale: 0.032,
+    roughness: 0.62,
+    envMapIntensity: 0.55,
+  }))
+  body.castShadow = true; body.receiveShadow = true
+  g.add(body)
+
+  // Glossy Madagascar vanilla piped chantilly pearl + delicate 24k gold fleck
+  const crown = new THREE.Mesh(new THREE.SphereGeometry(0.27, 40, 32), glazeMat('vanilla'))
+  crown.scale.set(1, 0.72, 1)
+  crown.position.y = 1.15
+  crown.castShadow = true
+  g.add(crown)
+
+  const goldFleck = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.10, 0.08),
+    new THREE.MeshStandardMaterial({ color: '#ecc86a', metalness: 0.96, roughness: 0.16, side: THREE.DoubleSide })
+  )
+  goldFleck.position.set(0.06, 1.33, 0.09)
+  goldFleck.rotation.set(-0.85, 0.35, 0.4)
+  g.add(goldFleck)
+
+  const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.88, 0.07, 64), ceramicMat('#e6dfd3'))
+  plate.position.y = -0.035
+  plate.receiveShadow = true
+  g.add(plate)
+  return g
+}
+
+// Companion 03 CANELÉ V (12-fluted caramelized Bordeaux pastry)
+function buildCaneleV() {
+  const g = new THREE.Group()
+  const radSegs = 96, hSegs = 32, H = 1.28
+  const geo = new THREE.CylinderGeometry(0.42, 0.52, H, radSegs, hSegs)
+  const pos = geo.attributes.position
+  for (let i = 0; i < pos.count; i++) {
+    let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i)
+    const ang = Math.atan2(z, x)
+    const r = Math.hypot(x, z)
+    const hNorm = (y + H / 2) / H
+    const flute = 1.0 + Math.cos(ang * 12.0) * 0.072 * Math.sin(hNorm * Math.PI * 0.88 + 0.1)
+    // Classic recessed crown dimple at top
+    if (hNorm > 0.96 && r < 0.36) y -= (1.0 - r / 0.36) * 0.14
+    pos.setXYZ(i, x * flute, y + H / 2, z * flute)
+  }
+  geo.computeVertexNormals()
+  const mesh = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({
+    color: '#3b1c0e',
+    roughness: 0.22,
+    clearcoat: 0.88,
+    clearcoatRoughness: 0.14,
+    envMapIntensity: 1.25,
+  }))
+  mesh.castShadow = true; mesh.receiveShadow = true
+  g.add(mesh)
+
+  const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.84, 0.78, 0.06, 64), ceramicMat('#e6dfd3'))
+  plate.position.y = -0.03
+  plate.receiveShadow = true
+  g.add(plate)
+  return g
+}
+
+// Small minimalist ceramic dipping bowl filled with glossy mirror glaze
+function buildGlazeBowl(flavor) {
+  const g = new THREE.Group()
+  const bowlPts = [
+    new THREE.Vector2(0.001, 0),
+    new THREE.Vector2(0.32, 0),
+    new THREE.Vector2(0.42, 0.08),
+    new THREE.Vector2(0.46, 0.28),
+    new THREE.Vector2(0.42, 0.28),
+    new THREE.Vector2(0.37, 0.07),
+    new THREE.Vector2(0.001, 0.07),
+  ]
+  const bowl = new THREE.Mesh(new THREE.LatheGeometry(bowlPts, 56), ceramicMat('#18241e'))
+  bowl.castShadow = true; bowl.receiveShadow = true
+  g.add(bowl)
+
+  const pool = new THREE.Mesh(new THREE.CylinderGeometry(0.405, 0.39, 0.04, 48), glazeMat(flavor))
+  pool.position.y = 0.23
+  g.add(pool)
+  return g
+}
+
+function buildCafeTable() {
+  const g = new THREE.Group()
+  const mat = new THREE.MeshStandardMaterial({ map: makePlasterTexture('#e2dbd0', 10), roughness: 0.78 })
+  const legMat = brassMat()
+  const W = 4.2, D = 1.92, H = 1.56
+  const shape = new THREE.Shape()
+  const hw = W / 2 - D / 2, rad = D / 2
+  shape.absarc(-hw, 0, rad, Math.PI / 2, Math.PI * 1.5, false)
+  shape.absarc(hw, 0, rad, -Math.PI / 2, Math.PI / 2, false)
+  shape.closePath()
+  const topGeo = new THREE.ExtrudeGeometry(shape, { depth: 0.075, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 6 })
+  topGeo.rotateX(Math.PI / 2)
+  const top = new THREE.Mesh(topGeo, mat)
+  top.position.y = H; top.castShadow = true; top.receiveShadow = true
+  g.add(top)
+  const lx = W * 0.31, lz = D * 0.27
+  for (const [x, z] of [[-lx,-lz],[lx,-lz],[-lx,lz],[lx,lz]]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, H - 0.04, 48), legMat)
+    leg.position.set(x, (H - 0.04) / 2, z); leg.castShadow = true; leg.receiveShadow = true
+    g.add(leg)
+  }
+  return g
+}
+
+// ---------- Renderer ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })
+renderer.toneMapping = THREE.ACESFilmicToneMapping
+renderer.toneMappingExposure = 1.05
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
+document.body.appendChild(renderer.domElement)
+
+function makeBaseScene(bgHex, envMode) {
+  const scene = new THREE.Scene()
+  if (bgHex !== null) scene.background = new THREE.Color(bgHex)
+  scene.environment = makeStudioEnv(renderer, envMode)
+  return scene
+}
+
+function addStudioFloor(scene, colorHex, y = 0, roughness = 0.94, size = 34) {
+  const plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(size, size),
+    new THREE.MeshStandardMaterial({ color: colorHex, roughness, metalness: 0.01, envMapIntensity: 0.2 })
+  )
+  plane.rotation.x = -Math.PI / 2; plane.position.y = y; plane.receiveShadow = true
+  scene.add(plane)
+  return plane
+}
+
+function addSoftKeyLights(scene, { keyInt = 2.0, fillInt = 1.0, rimInt = 1.25 } = {}) {
+  scene.add(new THREE.HemisphereLight('#fff8ec', '#998f82', 0.78))
+  const key = new THREE.DirectionalLight('#fff4e2', keyInt)
+  key.position.set(-4.2, 7.2, 4.8); key.castShadow = true
+  key.shadow.mapSize.set(2048, 2048)
+  key.shadow.camera.left = -6; key.shadow.camera.right = 6; key.shadow.camera.top = 6; key.shadow.camera.bottom = -6
+  key.shadow.bias = -0.0005; key.shadow.radius = 6
+  scene.add(key)
+  const rim = new THREE.DirectionalLight('#f8f2e8', rimInt); rim.position.set(5.4, 4.8, -3.6); scene.add(rim)
+  const fill = new THREE.DirectionalLight('#f0eae0', fillInt); fill.position.set(3.8, 2.8, 5.6); scene.add(fill)
+}
+
+// ---------- Shots ----------
+window.renderShot = function(shotName, width, height) {
+  renderer.setPixelRatio(1)
+  renderer.setSize(width, height, false)
+  renderer.setClearColor(0x000000, 0)
+  renderer.toneMappingExposure = 1.06
+
+  let scene, camera
+
+  if (shotName === 'hero-bare' || shotName === 'hero-reveal') {
+    const isReveal = shotName === 'hero-reveal'
+    // Exact matched deep nocturnal pine backdrop (#08110e) & identical donut lighting in BOTH plates -> ZERO seam!
+    scene = makeBaseScene('#08110e', 'hero')
+    renderer.toneMappingExposure = 1.10
+
+    const spot = new THREE.SpotLight('#fff6e8', 58, 18, Math.PI * 0.29, 0.86, 1.45)
+    spot.position.set(-1.4, 6.6, 4.0); spot.target.position.set(-0.05, 0.7, 0)
+    spot.castShadow = true; spot.shadow.mapSize.set(2048, 2048); spot.shadow.radius = 6
+    scene.add(spot); scene.add(spot.target)
+
+    const rightRim = new THREE.SpotLight('#e2e8df', 28, 18, Math.PI * 0.32, 0.88, 1.45)
+    rightRim.position.set(4.4, 4.5, 2.8); rightRim.target.position.set(0.2, 1.0, 0)
+    scene.add(rightRim); scene.add(rightRim.target)
+
+    const frontFill = new THREE.DirectionalLight('#fff2df', 0.85)
+    frontFill.position.set(0.6, 3.2, 6.0)
+    scene.add(frontFill)
+
+    // Hero Sculpture: 3 Architectural Donuts on sleek brushed-brass & dark-pine pedestals
+    const standMat = new THREE.MeshStandardMaterial({ color: '#111d18', roughness: 0.48, metalness: 0.28 })
+    const bMat = brassMat()
+
+    function makePlinthDonut(size, x, yBase, z, tiltX, rotY) {
+      const g = new THREE.Group()
+      const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.47, yBase, 48), standMat)
+      ped.position.y = yBase / 2; ped.castShadow = true; ped.receiveShadow = true
+      g.add(ped)
+      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.47, 0.045, 48), bMat)
+      collar.position.y = yBase; g.add(collar)
+
+      const d = buildDonutV({ size })
+      d.position.y = yBase + 0.02
+      d.rotation.x = tiltX
+      d.rotation.y = rotY
+      g.add(d)
+      g.position.set(x, 0, z)
+      return g
+    }
+
+    const dLeft = makePlinthDonut(1, -1.62, 0.74, 0.22, 0.52, 0.35)
+    const dCenter = makePlinthDonut(3, -0.04, 1.40, -0.05, 0.48, -0.25)
+    const dRight = makePlinthDonut(2, 1.56, 0.98, 0.14, 0.50, 0.55)
+    scene.add(dLeft, dCenter, dRight)
+
+    // In hero-reveal mode: lush cascading shower of glossy 3D donut sprinkles (capsule jimmies,
+    // sugar pearls, and metallic 24k gold confetti) suspended above and raining onto the donuts!
+    if (isReveal) {
+      const sprinklePalette = [
+        { col: '#fbf5e6', em: '#544d3e', metal: 0.04, rough: 0.14 }, // Vanilla Cream
+        { col: '#f2c65c', em: '#664c14', metal: 0.82, rough: 0.16 }, // 24K Gold Dragee
+        { col: '#8ec762', em: '#2b4718', metal: 0.04, rough: 0.16 }, // Uji Matcha Pistachio
+        { col: '#ee8c94', em: '#59242a', metal: 0.04, rough: 0.15 }, // Raspberry Rose
+        { col: '#e69854', em: '#543012', metal: 0.04, rough: 0.16 }, // Salted Caramel
+        { col: '#8fd0c4', em: '#224741', metal: 0.04, rough: 0.15 }, // Mint Frost
+        { col: '#f7d978', em: '#5e4d18', metal: 0.06, rough: 0.14 }, // Lemon Glaze
+        { col: '#db7ea4', em: '#4e2036', metal: 0.04, rough: 0.15 }, // Hibiscus Berry
+      ]
+      const sprinkleMats = sprinklePalette.map((p) => new THREE.MeshPhysicalMaterial({
+        color: p.col,
+        emissive: p.em,
+        emissiveIntensity: 0.55,
+        roughness: p.rough,
+        metalness: p.metal,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.06,
+        envMapIntensity: 1.45,
+      }))
+
+      const jimmyGeo = new THREE.CapsuleGeometry(0.021, 0.115, 6, 12)
+      const pearlGeo = new THREE.SphereGeometry(0.028, 14, 10)
+      const discGeo = new THREE.CylinderGeometry(0.036, 0.036, 0.012, 16)
+
+      // Deterministic pseudo-random helper
+      const hash = (n) => {
+        const s = Math.sin(n) * 43758.5453123
+        return s - Math.floor(s)
+      }
+
+      // Zone A: 220 cascading sprinkles floating across the dark pine sky above all 3 donuts
+      for (let i = 0; i < 220; i++) {
+        const r1 = hash(i * 12.9898 + 1.1)
+        const r2 = hash(i * 78.233 + 2.7)
+        const r3 = hash(i * 45.164 + 4.3)
+        const r4 = hash(i * 93.719 + 6.9)
+        const r5 = hash(i * 37.513 + 8.2)
+
+        // Cluster lightly in 3 graceful arches above the 3 donuts + wide fill across sky
+        const cluster = i % 4
+        let x, y
+        if (cluster === 0) {
+          // Above left Matcha donut
+          x = -1.60 + (r1 - 0.5) * 1.45
+          y = 1.42 + r2 * 2.15
+        } else if (cluster === 1) {
+          // Above center Vanilla Gold donut (tallest cascade)
+          x = -0.04 + (r1 - 0.5) * 1.85
+          y = 2.02 + r2 * 1.75
+        } else if (cluster === 2) {
+          // Above right Dark Cacao donut
+          x = 1.54 + (r1 - 0.5) * 1.45
+          y = 1.62 + r2 * 2.05
+        } else {
+          // Wide atmospheric sprinkle drift across entire upper hero
+          x = -2.45 + r1 * 4.90
+          y = 1.65 + r2 * 2.05
+        }
+        const z = -0.35 + r3 * 1.05
+
+        const mat = sprinkleMats[i % sprinkleMats.length]
+        const geo = (i % 7 === 0) ? discGeo : (i % 4 === 0) ? pearlGeo : jimmyGeo
+        const mesh = new THREE.Mesh(geo, mat)
+        mesh.position.set(x, y, z)
+        mesh.rotation.set(r1 * Math.PI * 2, r2 * Math.PI * 2, r4 * Math.PI * 2)
+        const sc = (geo === jimmyGeo) ? (0.78 + r5 * 0.58) : (0.75 + r5 * 0.55)
+        mesh.scale.setScalar(sc)
+        scene.add(mesh)
+      }
+
+      // Zone B: 60 crisp sprinkles hovering right over the crowns of the 3 donuts (extra reveal layer!)
+      const crownCenters = [
+        { cx: -1.62, cy: 1.24, cz: 0.36, rad: 0.72 },
+        { cx: -0.04, cy: 1.94, cz: 0.14, rad: 0.90 },
+        { cx:  1.56, cy: 1.48, cz: 0.30, rad: 0.80 },
+      ]
+      for (let i = 0; i < 60; i++) {
+        const c = crownCenters[i % 3]
+        const r1 = hash(i * 51.31 + 11.4)
+        const r2 = hash(i * 29.73 + 17.8)
+        const r3 = hash(i * 83.17 + 23.2)
+        const ang = r1 * Math.PI * 2
+        const dist = (0.42 + r2 * 0.58) * c.rad
+        const x = c.cx + Math.cos(ang) * dist
+        const z = c.cz + Math.sin(ang) * dist * 0.75
+        const y = c.cy + 0.08 + r3 * 0.38
+
+        const mat = sprinkleMats[(i * 3 + 1) % sprinkleMats.length]
+        const geo = (i % 4 === 0) ? pearlGeo : jimmyGeo
+        const mesh = new THREE.Mesh(geo, mat)
+        mesh.position.set(x, y, z)
+        mesh.rotation.set(r1 * Math.PI * 2, r2 * Math.PI * 2, r3 * Math.PI * 2)
+        mesh.scale.setScalar(0.85 + r2 * 0.40)
+        scene.add(mesh)
+      }
+    }
+
+    camera = new THREE.PerspectiveCamera(28, width / height, 0.1, 50)
+    camera.position.set(0.0, 3.05, 8.25)
+    camera.lookAt(0.0, 1.92, 0)
+  }
+
+  else if (shotName === 'donut-34' || shotName === 'donut-front' || shotName === 'donut-above' || shotName === 'donut-ii' || shotName === 'donut-i') {
+    scene = makeBaseScene('#ebe6dc', 'warm')
+    addStudioFloor(scene, '#ebe6dc', 0, 0.95, 34)
+    addSoftKeyLights(scene, { keyInt: 2.1, fillInt: 1.05, rimInt: 1.25 })
+
+    const size = shotName === 'donut-i' ? 1 : shotName === 'donut-ii' ? 2 : 3
+    const d = buildDonutV({ size })
+    scene.add(d)
+
+    camera = new THREE.PerspectiveCamera(25, width / height, 0.1, 45)
+    if (shotName === 'donut-34') {
+      d.rotation.y = 0.45
+      camera.position.set(0.0, 3.25, 6.2)
+      camera.lookAt(0, 0.32, 0)
+    } else if (shotName === 'donut-front') {
+      d.rotation.y = 0.25
+      camera.position.set(0.0, 0.72, 6.5)
+      camera.lookAt(0, 0.34, 0)
+    } else if (shotName === 'donut-above') {
+      d.rotation.y = 0.6
+      camera.position.set(0.0, 5.1, 3.6)
+      camera.lookAt(0, 0.30, 0)
+    } else if (shotName === 'donut-ii') {
+      d.rotation.y = 0.35
+      camera.position.set(0.0, 3.05, 5.65)
+      camera.lookAt(0, 0.30, 0)
+    } else {
+      d.rotation.y = 0.2
+      camera.position.set(0.0, 2.8, 5.1)
+      camera.lookAt(0, 0.26, 0)
+    }
+  }
+
+  else if (shotName === 'donut-top') {
+    // Pure 90° orthographic top-down plan of Donut V (III) on exact #f3efe6 warm alabaster paper
+    scene = makeBaseScene('#f3efe6', 'warm')
+    addSoftKeyLights(scene, { keyInt: 1.8, fillInt: 1.15, rimInt: 1.0 })
+    const d = buildDonutV({ size: 3 })
+    scene.add(d)
+
+    const aspect = width / height
+    const halfH = 1.65
+    camera = new THREE.OrthographicCamera(-halfH * aspect, halfH * aspect, halfH, -halfH, 0.1, 20)
+    camera.position.set(0, 8, 0)
+    camera.up.set(0, 0, -1)
+    camera.lookAt(0, 0, 0)
+  }
+
+  else if (shotName === 'thumb-i' || shotName === 'thumb-ii' || shotName === 'thumb-iii') {
+    scene = makeBaseScene('#faf7f0', 'warm')
+    addSoftKeyLights(scene, { keyInt: 2.0, fillInt: 1.15, rimInt: 1.2 })
+    const size = shotName === 'thumb-i' ? 1 : shotName === 'thumb-ii' ? 2 : 3
+    const d = buildDonutV({ size })
+    d.rotation.x = 0.45
+    scene.add(d)
+    camera = new THREE.PerspectiveCamera(25, width / height, 0.1, 35)
+    camera.position.set(0, 2.35, 5.65)
+    camera.lookAt(0, 0.32, 0)
+  }
+
+  else if (shotName === 'collection-choux') {
+    scene = makeBaseScene('#ebe6dc', 'warm')
+    addStudioFloor(scene, '#ebe6dc', -0.07, 0.95, 34)
+    addSoftKeyLights(scene, { keyInt: 2.0, fillInt: 1.0, rimInt: 1.2 })
+    scene.add(buildChouxV())
+    camera = new THREE.PerspectiveCamera(25, width / height, 0.1, 45)
+    camera.position.set(0.2, 2.4, 5.6)
+    camera.lookAt(0, 0.55, 0)
+  }
+
+  else if (shotName === 'collection-canele') {
+    scene = makeBaseScene('#ebe6dc', 'warm')
+    addStudioFloor(scene, '#ebe6dc', -0.06, 0.95, 34)
+    addSoftKeyLights(scene, { keyInt: 2.1, fillInt: 1.0, rimInt: 1.3 })
+    scene.add(buildCaneleV())
+    camera = new THREE.PerspectiveCamera(25, width / height, 0.1, 45)
+    camera.position.set(0.2, 2.35, 5.4)
+    camera.lookAt(0, 0.62, 0)
+  }
+
+  else if (shotName === 'editorial-dining') {
+    scene = makeBaseScene('#d3c9bc', 'warm')
+    const wallMat = new THREE.MeshStandardMaterial({ map: makePlasterTexture('#dbd2c6', 12), roughness: 0.94 })
+    const floorMat = new THREE.MeshStandardMaterial({ map: makePlasterTexture('#baa997', 14), roughness: 0.86 })
+    const rugMat = new THREE.MeshStandardMaterial({ map: makePlasterTexture('#dfd8cd', 22), roughness: 0.98 })
+
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(28, 28), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor)
+    const rug = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.03, 5.4), rugMat); rug.position.set(0, 0.015, 0.2); rug.receiveShadow = true; scene.add(rug)
+    const wallL = new THREE.Mesh(new THREE.BoxGeometry(5.2, 12, 0.55), wallMat); wallL.position.set(-4.1, 6, -3.8); wallL.receiveShadow = true; scene.add(wallL)
+    const wallR = new THREE.Mesh(new THREE.BoxGeometry(5.4, 12, 0.55), wallMat); wallR.position.set(4.2, 6, -3.8); wallR.receiveShadow = true; scene.add(wallR)
+    const wallTop = new THREE.Mesh(new THREE.BoxGeometry(3.5, 3.0, 0.55), wallMat); wallTop.position.set(0, 10.5, -3.8); scene.add(wallTop)
+
+    const winBg = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 9.2), new THREE.MeshBasicMaterial({ color: '#fbf5eb' }))
+    winBg.position.set(0, 4.6, -4.4); scene.add(winBg)
+    const linenMat = new THREE.MeshStandardMaterial({ color: '#efe8dd', roughness: 0.95, transparent: true, opacity: 0.55 })
+    for (let i = 0; i < 14; i++) {
+      const fold = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 9.2, 16), linenMat)
+      fold.position.set(-1.55 + i * 0.24, 4.6, -4.15 + (i % 2) * 0.06); scene.add(fold)
+    }
+
+    const table = buildCafeTable()
+    table.rotation.y = 0.22; table.position.set(-0.22, 0.03, 0.05)
+    scene.add(table)
+
+    // Ceramic tasting platter with cleanly separated Donut V trio on the cafe table
+    const platter = new THREE.Mesh(new THREE.CylinderGeometry(1.38, 1.26, 0.06, 56), ceramicMat('#f2ede4'))
+    platter.position.set(-0.2, 1.66, 0.05); platter.receiveShadow = true; scene.add(platter)
+
+    const trio = new THREE.Group()
+    const d1 = buildDonutV({ size: 1 }); d1.scale.setScalar(0.42); d1.position.set(-0.64, 0, 0.34)
+    const d2 = buildDonutV({ size: 2 }); d2.scale.setScalar(0.42); d2.position.set(0.64, 0, 0.28)
+    const d3 = buildDonutV({ size: 3 }); d3.scale.setScalar(0.42); d3.position.set(-0.02, 0, -0.46)
+    trio.add(d1, d2, d3)
+    trio.position.set(-0.2, 1.69, 0.05)
+    scene.add(trio)
+
+    const sun = new THREE.DirectionalLight('#fff2dc', 3.2)
+    sun.position.set(-2.5, 6.4, -5.8); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048)
+    sun.shadow.camera.left = -7; sun.shadow.camera.right = 7; sun.shadow.camera.top = 7; sun.shadow.camera.bottom = -7; sun.shadow.radius = 4
+    scene.add(sun)
+    scene.add(new THREE.DirectionalLight('#f8f1e7', 1.4).translateX(3.8).translateY(4.4).translateZ(5.8))
+    scene.add(new THREE.HemisphereLight('#f9f3ea', '#8b7e70', 0.95))
+
+    camera = new THREE.PerspectiveCamera(32, width / height, 0.1, 55)
+    camera.position.set(1.1, 3.3, 8.6)
+    camera.lookAt(-0.1, 1.7, -0.2)
+  }
+
+  else if (shotName === 'editorial-study') {
+    scene = makeBaseScene('#1d1712', 'warm')
+    const woodMat = new THREE.MeshStandardMaterial({ map: makeWoodTexture(), roughness: 0.72 })
+    const stoneMat = new THREE.MeshStandardMaterial({ map: makePlasterTexture('#d4cbbd', 16), roughness: 0.82 })
+    const backWall = new THREE.Mesh(new THREE.BoxGeometry(18, 14, 0.4), woodMat); backWall.position.set(0, 4.5, -2.2); backWall.receiveShadow = true; scene.add(backWall)
+    const shelf = new THREE.Mesh(new THREE.BoxGeometry(12, 0.45, 3.2), stoneMat); shelf.position.set(0, -0.225, -0.2); shelf.receiveShadow = true; scene.add(shelf)
+
+    // Stacked Donut V duo on smoked oak counter
+    const d3 = buildDonutV({ size: 3 }); d3.position.set(-0.25, 0, 0.05)
+    const d2 = buildDonutV({ size: 2 }); d2.position.set(-0.15, 0.62, 0.02); d2.rotation.z = 0.08
+    const d1 = buildDonutV({ size: 1 }); d1.position.set(1.15, 0, 0.35)
+    scene.add(d3, d2, d1)
+
+    const raking = new THREE.DirectionalLight('#ffecd4', 2.4)
+    raking.position.set(-4.5, 5.4, 3.8); raking.castShadow = true; raking.shadow.mapSize.set(2048, 2048)
+    scene.add(raking)
+    scene.add(new THREE.HemisphereLight('#d6c6b2', '#261e18', 0.65))
+
+    camera = new THREE.PerspectiveCamera(26, width / height, 0.1, 45)
+    camera.position.set(-0.4, 2.35, 6.2)
+    camera.lookAt(0.2, 0.55, 0.0)
+  }
+
+  else if (shotName === 'editorial-plinth') {
+    scene = makeBaseScene('#dfd9d0', 'warm')
+    const wallMat = new THREE.MeshStandardMaterial({ map: makePlasterTexture('#e4dfd6', 10), roughness: 0.94 })
+    const plinthMat = new THREE.MeshStandardMaterial({ map: makePlasterTexture('#d5cec3', 16), roughness: 0.86 })
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(28, 20), wallMat); back.position.set(0, 4, -3.8); back.receiveShadow = true; scene.add(back)
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(2.6, 4.2, 2.4), plinthMat); plinth.position.set(0, -2.1, 0); plinth.castShadow = true; plinth.receiveShadow = true; scene.add(plinth)
+
+    const d3 = buildDonutV({ size: 3 })
+    scene.add(d3)
+    addSoftKeyLights(scene, { keyInt: 2.5, fillInt: 1.0, rimInt: 1.1 })
+    camera = new THREE.PerspectiveCamera(26, width / height, 0.1, 45)
+    camera.position.set(0.35, 2.55, 6.2)
+    camera.lookAt(0, 0.1, 0)
+  }
+
+  else if (shotName === 'editorial-dark') {
+    scene = makeBaseScene('#08110e', 'hero')
+    addStudioFloor(scene, '#d8d0c2', 0, 0.84, 28)
+
+    const d3 = buildDonutV({ size: 3 }); d3.position.set(-0.45, 0, -0.05)
+    const d1 = buildDonutV({ size: 1 }); d1.position.set(0.85, 0, 0.45)
+    scene.add(d3, d1)
+
+    const topSpot = new THREE.SpotLight('#fff6e8', 36, 18, Math.PI * 0.28, 0.88, 1.5)
+    topSpot.position.set(-1.6, 6.4, 3.8); topSpot.castShadow = true; topSpot.shadow.mapSize.set(2048, 2048)
+    scene.add(topSpot)
+
+    camera = new THREE.PerspectiveCamera(26, width / height, 0.1, 45)
+    camera.position.set(0.15, 2.45, 5.8)
+    camera.lookAt(0.15, 0.35, 0.1)
+  }
+
+  else if (shotName === 'editorial-close') {
+    scene = makeBaseScene('#ebe6dc', 'warm')
+    addSoftKeyLights(scene, { keyInt: 2.2, fillInt: 1.05, rimInt: 1.4 })
+    const d3 = buildDonutV({ size: 3 })
+    d3.rotation.y = 0.8
+    scene.add(d3)
+    camera = new THREE.PerspectiveCamera(22, width / height, 0.1, 30)
+    camera.position.set(0.55, 1.85, 3.1)
+    camera.lookAt(0.22, 0.42, 0.12)
+  }
+
+  else if (shotName.startsWith('studio-')) {
+    // Split-Horizon Interactive "Glaze the Donut" Studio (#09130f pine / #ddd6c8 limestone)
+    const isBase = shotName === 'studio-horizon'
+    const isGlaze = shotName.startsWith('studio-glaze-')
+    const isBowl = shotName.startsWith('studio-bowl-')
+
+    scene = makeBaseScene(isBase ? '#09130f' : null, 'hero')
+    renderer.toneMappingExposure = 1.08
+
+    // Cleanly separated donuts left-to-center (zero overlap!) + 3 ceramic glaze bowls well inside lower-right frame
+    const donutScale = 0.72
+    const donutPos = [
+      { size: 1, x: -2.55, y: 0.34, z: 0.08, tilt: 0.44, flavor: 'matcha' },
+      { size: 2, x: -0.92, y: 0.56, z: -0.05, tilt: 0.42, flavor: 'cacao' },
+      { size: 3, x:  0.86, y: 0.40, z: 0.06, tilt: 0.44, flavor: 'vanilla' },
+    ]
+    const bowlPositions = [
+      [2.05, 0, 1.38],
+      [2.82, 0, 2.02],
+      [3.08, 0, 0.65],
+    ]
+    const standMat = new THREE.MeshStandardMaterial({ color: '#14221c', roughness: 0.45, metalness: 0.25 })
+    const bMat = brassMat()
+
+    if (isBase) {
+      const table = new THREE.Mesh(
+        new THREE.PlaneGeometry(36, 14),
+        new THREE.MeshStandardMaterial({ map: makePlasterTexture('#ddd6c8', 8), roughness: 0.88, envMapIntensity: 0.18 })
+      )
+      table.rotation.x = -Math.PI / 2; table.position.set(0, 0, 2.4); table.receiveShadow = true
+      scene.add(table)
+
+      const back = new THREE.Mesh(new THREE.PlaneGeometry(36, 16), new THREE.MeshBasicMaterial({ color: '#09130f' }))
+      back.position.set(0, 6.8, -4.2); scene.add(back)
+
+      for (const p of donutPos) {
+        const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.35, p.y, 48), standMat)
+        ped.position.set(p.x, p.y / 2, p.z); ped.castShadow = true; ped.receiveShadow = true; scene.add(ped)
+        const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.036, 48), bMat)
+        collar.position.set(p.x, p.y, p.z); scene.add(collar)
+
+        const naked = buildDonutV({ size: p.size, includeGlaze: false })
+        naked.scale.setScalar(donutScale)
+        naked.position.set(p.x, p.y + 0.02, p.z)
+        naked.rotation.x = p.tilt
+        scene.add(naked)
+      }
+
+      const key = new THREE.DirectionalLight('#fff6e8', 2.5)
+      key.position.set(-3.2, 6.5, 4.4); key.castShadow = true; key.shadow.mapSize.set(2048, 2048)
+      key.shadow.camera.left = -7; key.shadow.camera.right = 7; key.shadow.camera.top = 5; key.shadow.camera.bottom = -5; key.shadow.radius = 5.5
+      scene.add(key)
+      scene.add(new THREE.DirectionalLight('#f0eae0', 1.25).translateX(4.5).translateY(3.8).translateZ(4.5))
+      scene.add(new THREE.HemisphereLight('#f6f0e6', '#666058', 0.62))
+    }
+
+    else if (isGlaze) {
+      // Render ONLY the glossy dripping glaze + toppings depth-occluded by invisible holdout brioche dough!
+      const idx = parseInt(shotName.split('-').pop(), 10) - 1
+      const p = donutPos[idx]
+      const coated = buildDonutV({ size: p.size, includeGlaze: true, holdoutDough: true, flavorOverride: p.flavor })
+      coated.scale.setScalar(donutScale)
+      coated.position.set(p.x, p.y + 0.02, p.z)
+      coated.rotation.x = p.tilt
+      scene.add(coated)
+      addSoftKeyLights(scene, { keyInt: 2.3, fillInt: 1.15, rimInt: 1.4 })
+    }
+
+    else if (isBowl) {
+      const idx = parseInt(shotName.split('-').pop(), 10) - 1
+      const flavors = ['matcha', 'cacao', 'vanilla']
+      const bowl = buildGlazeBowl(flavors[idx])
+      bowl.scale.setScalar(0.88)
+      bowl.position.set(...bowlPositions[idx])
+      scene.add(bowl)
+
+      const shC = document.createElement('canvas'); shC.width = 128; shC.height = 128
+      const sctx = shC.getContext('2d')
+      const sg = sctx.createRadialGradient(64, 64, 12, 64, 64, 58)
+      sg.addColorStop(0, 'rgba(15,28,23,0.42)'); sg.addColorStop(0.65, 'rgba(15,28,23,0.14)'); sg.addColorStop(1, 'rgba(15,28,23,0)')
+      sctx.fillStyle = sg; sctx.fillRect(0, 0, 128, 128)
+      const shPlane = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.95), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(shC), transparent: true, depthWrite: false }))
+      shPlane.rotation.x = -Math.PI / 2; shPlane.position.set(bowlPositions[idx][0], 0.01, bowlPositions[idx][2])
+      scene.add(shPlane)
+
+      addSoftKeyLights(scene, { keyInt: 2.3, fillInt: 1.1, rimInt: 1.3 })
+    }
+
+    camera = new THREE.PerspectiveCamera(28, width / height, 0.1, 60)
+    camera.position.set(0.15, 2.35, 10.6)
+    camera.lookAt(0.15, 0.72, 0.0)
+    camera.updateMatrixWorld()
+
+    // Save projected 2D percentages for pixel-exact bowl hitboxes
+    window.__studioBowlBoxes = bowlPositions.map(([x, y, z]) => {
+      const v = new THREE.Vector3(x, y + 0.14, z).project(camera)
+      const cx = (v.x * 0.5 + 0.5) * 100
+      const cy = (-v.y * 0.5 + 0.5) * 100
+      return { cx: +cx.toFixed(2), cy: +cy.toFixed(2) }
+    })
+  }
+
+  renderer.render(scene, camera)
+  return true
+}
+</script>
+</body>
+</html>

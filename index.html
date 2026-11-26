@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>VELA — Donut V (III)</title>
+    <meta name="description" content="VELA makes architectural patisserie. Donut V: 48-hour golden brioche and mirror glaze, in three editions." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#0f1c17" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Gilda+Display&family=Marcellus&display=swap" rel="stylesheet" />
+    <script>
+      ;(function () {
+        function syncVw() {
+          document.documentElement.style.setProperty('--vw', document.documentElement.clientWidth + 'px')
+        }
+        syncVw()
+        window.addEventListener('resize', syncVw)
+      })()
+    </script>
+  </head>
+  <body>
+    <!-- Preloader -->
+    <div class="preloader" id="preloader" aria-hidden="true">
+      <canvas class="preloader__mark" id="preloader-mark" aria-hidden="true"></canvas>
+      <p class="preloader__name t12"><span class="line"><span class="line__in">VELA</span></span></p>
+      <p class="preloader__count t12"><span class="line"><span class="line__in" id="preloader-count">0%</span></span></p>
+    </div>
+
+    <!-- Cursor-following Coming Soon pill -->
+    <div class="soon t12" id="soon-pill" aria-hidden="true">COMING SOON</div>
+
+    <!-- Fixed Adaptive Header -->
+    <header class="header" id="site-header" data-theme="dark">
+      <div class="header__row">
+        <a href="/" class="header__brand" id="header-brand" data-nav="home" aria-label="VELA Home">
+          <span class="header__logo" id="header-logo"></span>
+          <span class="header__wordmark t12"><span class="line"><span class="line__in">VELA</span></span></span>
+        </a>
+
+        <!-- Desktop 3-Group Patisserie Directory -->
+        <nav class="header__menu" aria-label="Menu">
+          <div class="menu__group menu__group--01">
+            <span class="menu__n t12"><span class="line"><span class="line__in">01</span></span></span>
+            <a href="/donut-v?size=III" class="menu__name t12" data-nav="pdp" data-size="III"><span class="line"><span class="line__in">DONUT V</span></span></a>
+            <ul class="menu__sub">
+              <li><a href="/donut-v?size=III" class="t12" data-nav="pdp" data-size="III"><span class="line"><span class="line__in">D. V III</span></span></a></li>
+              <li><a href="/donut-v?size=II" class="t12" data-nav="pdp" data-size="II"><span class="line"><span class="line__in">D. V II</span></span></a></li>
+              <li><a href="/donut-v?size=I" class="t12" data-nav="pdp" data-size="I"><span class="line"><span class="line__in">D. V I</span></span></a></li>
+            </ul>
+          </div>
+
+          <div class="menu__group menu__group--02 menu__group--more" data-soon>
+            <span class="menu__n t12"><span class="line"><span class="line__in">02</span></span></span>
+            <a href="#coming-soon" class="menu__name t12" aria-disabled="true" tabindex="-1"><span class="line"><span class="line__in">CHOUX V</span></span></a>
+            <ul class="menu__sub">
+              <li><a href="#coming-soon" class="t12" aria-disabled="true" tabindex="-1"><span class="line"><span class="line__in">C. V PETIT</span></span></a></li>
+              <li><a href="#coming-soon" class="t12" aria-disabled="true" tabindex="-1"><span class="line"><span class="line__in">C. V CLASSIQUE</span></span></a></li>
+              <li><a href="#coming-soon" class="t12" aria-disabled="true" tabindex="-1"><span class="line"><span class="line__in">C. V GRAND</span></span></a></li>
+            </ul>
+          </div>
+
+          <div class="menu__group menu__group--03 menu__group--more" data-soon>
+            <span class="menu__n t12"><span class="line"><span class="line__in">03</span></span></span>
+            <a href="#coming-soon" class="menu__name t12" aria-disabled="true" tabindex="-1"><span class="line"><span class="line__in">CANELÉ V</span></span></a>
+            <ul class="menu__sub">
+              <li><a href="#coming-soon" class="t12" aria-disabled="true" tabindex="-1"><span class="line"><span class="line__in">N. V MINI</span></span></a></li>
+              <li><a href="#coming-soon" class="t12" aria-disabled="true" tabindex="-1"><span class="line"><span class="line__in">N. V CLASSIQUE</span></span></a></li>
+              <li><a href="#coming-soon" class="t12" aria-disabled="true" tabindex="-1"><span class="line"><span class="line__in">N. V COFFRET</span></span></a></li>
+            </ul>
+          </div>
+        </nav>
+
+        <!-- Center Scaling Display Title -->
+        <h1 class="header__title t50" id="header-title">
+          <span class="line"><span class="line__in">DONUT V (III)</span></span>
+        </h1>
+
+        <!-- Desktop Right Navigation -->
+        <div class="header__right">
+          <button type="button" class="header__link t12" id="btn-store" aria-expanded="false" aria-controls="store-drawer">
+            <span class="line"><span class="line__in">STORE</span></span>
+          </button>
+          <a href="/about" class="header__link t12" id="btn-about" data-nav="about">
+            <span class="line"><span class="line__in">ABOUT</span></span>
+          </a>
+        </div>
+
+        <button type="button" class="header__cart t12" id="btn-cart" aria-expanded="false" aria-controls="cart-drawer">
+          <span class="line"><span class="line__in">CART ( <span class="cart-count">0</span> )</span></span>
+        </button>
+
+        <!-- Mobile Menu Toggle -->
+        <button type="button" class="header__mob-menu t12" id="btn-mobile-menu" aria-expanded="false" aria-controls="mobile-menu">
+          MENU
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Scroll Experience -->
+    <main id="main-home">
+      <!-- HERO (Deep Pine Studio + Interactive Fluid Vapor Reveal of Cascading Sprinkles) -->
+      <section class="hero" id="hero">
+        <div class="hero__media">
+          <img src="/img/hero-bare.png" alt="Donut V artisanal brioche donuts in Uji matcha, dark cacao, and Tahitian vanilla gold glaze" class="hero__img" fetchpriority="high" />
+          <canvas class="hero__gl" id="hero-gl" aria-hidden="true"></canvas>
+        </div>
+      </section>
+
+      <!-- STORY 6-ACT CHOREOGRAPHY (#f3efe6 Warm Alabaster Paper) -->
+      <section class="story" id="story">
+        <!-- Act 1: Monumental Title + 4-Frame Center Photo Strip + Spec Band -->
+        <div class="story__act1">
+          <h2 class="story__display t120" aria-label="Donut V (III) made to hold a warm crumb">
+            <span class="line"><span class="line__in">DONUT V (III)</span></span>
+            <span class="line"><span class="line__in">MADE TO HOLD A</span></span>
+            <span class="line"><span class="line__in">WARM CRUMB</span></span>
+          </h2>
+
+          <div class="story__specs" aria-label="Donut V (III) specifications">
+            <span class="t12 spec-l1">⌀ 106 MM</span>
+            <span class="t12 spec-l2">145 G</span>
+            <span class="t12 spec-r1">48H BRIOCHE / MIRROR GLAZE</span>
+            <span class="t12 spec-r2">H 54 MM</span>
+          </div>
+
+          <div class="story__strip" id="story-strip">
+            <figure class="strip__frame"><img src="/img/donut-34.png" alt="Donut V (III) three-quarter studio view" loading="eager" /></figure>
+            <figure class="strip__frame"><img src="/img/donut-front.png" alt="Donut V (III) side profile elevation" loading="eager" /></figure>
+            <figure class="strip__frame"><img src="/img/donut-above.png" alt="Donut V (III) elevated mirror glaze study" loading="eager" /></figure>
+            <figure class="strip__frame"><img src="/img/donut-top.png" alt="Donut V (III) top-down ring silhouette" loading="eager" /></figure>
+          </div>
+        </div>
+
+        <!-- Act 2: Parting Editorial Copy + Top-Down Photo-to-Wireframe Wipe -->
+        <div class="story__act2" id="story-act2">
+          <div class="story__sticky story__sticky--act2">
+            <div class="parting__copy" id="parting-copy">
+              <div class="parting__row t30">
+                <span class="split-l">THE FIRST&nbsp;</span><span class="split-r">ARTISANAL</span>
+              </div>
+              <div class="parting__row t30">
+                <span class="split-l">PASTRY BY VELA™&nbsp;</span><span class="split-r">DONUT V (III).</span>
+              </div>
+              <div class="parting__row t30">
+                <span class="split-l">A TORUS&nbsp;</span><span class="split-r">MADE FOR</span>
+              </div>
+              <div class="parting__row t30">
+                <span class="split-l">SLOW&nbsp;</span><span class="split-r">MORNINGS.</span>
+              </div>
+              <div class="parting__meta t12s is-grey">
+                <div class="parting__row">
+                  <span class="split-l">Dimen</span><span class="split-r">sions:</span>
+                </div>
+                <div class="parting__row">
+                  <span class="split-l">⌀ 106 × H 54</span><span class="split-r">&nbsp;mm · 145 g</span>
+                </div>
+                <div class="parting__row parting__mat">
+                  <span class="split-l">48h Brioche</span><span class="split-r">&nbsp;&amp; Vanilla Bean</span>
+                </div>
+              </div>
+              <div class="parting__cta">
+                <a href="/donut-v?size=III" class="link-under t12" data-nav="pdp" data-size="III">
+                  <span class="split-l">ORDER&nbsp;</span><span class="split-r">NOW</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Descending Top-Down Ring + Surgical CAD Wireframe Wipe -->
+            <div class="wipe-stage" id="wipe-stage" aria-hidden="true">
+              <div class="wipe-stage__photo" id="wipe-photo-wrap">
+                <img src="/img/donut-top.png" alt="" />
+              </div>
+              <div class="wipe-stage__cad" id="wipe-cad-wrap">
+                <svg id="wipe-cad-svg" viewBox="0 0 800 800" fill="none"></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Act 3: Scroll-Scrubbed Torus CAD Wireframe Rotation & 3 Beats -->
+        <div class="story__act3" id="story-act3">
+          <div class="story__sticky story__sticky--act3">
+            <div class="spin__hud t12">
+              <span class="spin__num" id="spin-num">01</span>
+              <span class="spin__beat is-active" data-beat="0">GOLDEN BRIOCHE</span>
+              <span class="spin__beat" data-beat="1">MIRROR GLAZE</span>
+              <span class="spin__beat" data-beat="2">ONE TORUS</span>
+            </div>
+
+            <div class="spin__cad-wrap" id="spin-cad-wrap" aria-hidden="true">
+              <svg id="spin-cad-svg" viewBox="0 0 800 800" fill="none"></svg>
+            </div>
+
+            <div class="spin__titles" aria-live="polite">
+              <p class="spin__title t120 is-active" data-beat-title="0">GOLDEN BRIOCHE</p>
+              <p class="spin__title t120" data-beat-title="1">MIRROR GLAZE</p>
+              <p class="spin__title t120" data-beat-title="2">ONE TORUS</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Act 4: 3D Photo Vortex Spiral (Desktop) / Horizontal Photo Strip (Mobile) -->
+        <div class="story__act4" id="story-act4">
+          <div class="story__sticky story__sticky--act4">
+            <div class="spiral__stage" id="spiral-stage"></div>
+            <div class="spiral__mobile-track" id="spiral-mobile-track" aria-label="Editorial patisserie gallery"></div>
+            <div class="spiral__mobile-bar" aria-hidden="true"><span id="spiral-mobile-progress"></span></div>
+          </div>
+        </div>
+
+        <!-- Act 5 & 6: Floating Edition Card -> Isometric Architectural Table Blueprint Morph -->
+        <div class="story__act56" id="story-act56">
+          <div class="story__sticky story__sticky--act56">
+            <div class="sizes__flank t12" id="sizes-flank">
+              <span>THREE EDITIONS</span>
+              <span>CHOOSE YOURS</span>
+            </div>
+
+            <!-- Interactive Alabaster Edition Selector Card -->
+            <div class="size-card" id="size-card" role="region" aria-label="Choose Donut V edition">
+              <h3 class="size-card__title t30" id="card-title">DONUT V (III)</h3>
+
+              <div class="size-card__grid" role="radiogroup" aria-label="Donut V editions">
+                <button type="button" class="size-tile" role="radio" aria-checked="false" data-card-size="I">
+                  <span class="size-tile__tag t12">(I) MATCHA</span>
+                  <span class="size-tile__svg" id="card-svg-I"></span>
+                </button>
+                <button type="button" class="size-tile" role="radio" aria-checked="false" data-card-size="II">
+                  <span class="size-tile__tag t12">(II) CACAO</span>
+                  <span class="size-tile__svg" id="card-svg-II"></span>
+                </button>
+                <button type="button" class="size-tile is-selected" role="radio" aria-checked="true" data-card-size="III">
+                  <span class="size-tile__tag t12">(III) VANILLA</span>
+                  <span class="size-tile__svg" id="card-svg-III"></span>
+                </button>
+              </div>
+
+              <div class="size-card__meta t12s is-grey">
+                <p>Dimensions:</p>
+                <p id="card-dims">⌀ 106 × H 54 mm · 145 g</p>
+                <p class="size-card__mat" id="card-mat">48h Brioche, Vanilla Bean &amp; 24K Gold Leaf</p>
+              </div>
+
+              <a href="/donut-v?size=III" class="size-card__cta link-under t12" id="card-cta" data-nav="pdp" data-size="III">
+                ORDER FROM €14
+              </a>
+            </div>
+
+            <!-- Full-Viewport Isometric Cafe Table Blueprint Morph Layer -->
+            <div class="blueprint-stage" id="blueprint-stage" aria-hidden="true">
+              <svg id="blueprint-svg" viewBox="0 0 1440 820" fill="none"></svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- COLLECTION V (#0f1c17 Deep Pine) -->
+      <section class="collection" id="collection">
+        <div class="collection__head t120">
+          <span class="collection__letter">V</span>
+          <span class="collection__word">COLLECTION</span>
+          <span class="collection__num">(03)</span>
+        </div>
+
+        <div class="collection__grid">
+          <div class="collection__label t12">COLLECTION (03):</div>
+
+          <article class="col-item col-item--1">
+            <a href="/donut-v?size=III" class="col-item__link" data-nav="pdp" data-size="III">
+              <figure class="col-item__img-wrap">
+                <img src="/img/donut-34.png" alt="01 Donut V artisanal glazed brioche torus" loading="lazy" />
+              </figure>
+              <div class="col-item__foot">
+                <span class="t12">01 &nbsp;DONUT V</span>
+                <span class="t12s is-grey">Dimensions:<br />⌀ 106 × H 54 mm</span>
+              </div>
+            </a>
+          </article>
+
+          <article class="col-item col-item--2 is-disabled" data-soon>
+            <div class="col-item__link" aria-disabled="true">
+              <figure class="col-item__img-wrap">
+                <img src="/img/collection-choux.png" alt="02 Choux V golden craquelin pastry" loading="lazy" />
+              </figure>
+              <div class="col-item__foot">
+                <span class="t12">02 &nbsp;CHOUX V</span>
+                <span class="t12s is-grey">Dimensions:<br />⌀ 74 × H 62 mm</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="col-item col-item--3 is-disabled" data-soon>
+            <div class="col-item__link" aria-disabled="true">
+              <figure class="col-item__img-wrap">
+                <img src="/img/collection-canele.png" alt="03 Canelé V fluted caramelized Bordeaux pastry" loading="lazy" />
+              </figure>
+              <div class="col-item__foot">
+                <span class="t12">03 &nbsp;CANELÉ V</span>
+                <span class="t12s is-grey">Dimensions:<br />⌀ 55 × H 58 mm</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- INTERACTIVE "GLAZE THE DONUT" STUDIO (#09130f / #ddd6c8 Split Horizon) -->
+      <section class="studio" id="studio" aria-label="Glaze the Donut interactive studio">
+        <div class="studio__stage" id="studio-stage">
+          <!-- Base Split-Horizon Photograph: 3 Fresh Un-glazed Golden Brioche Donuts on Brass Risers -->
+          <img src="/img/studio-horizon.png" alt="Three freshly baked brioche donuts awaiting artisanal mirror glaze" class="studio__layer studio__base" />
+
+          <!-- Holdout-Occluded Glossy Mirror Glaze + Toppings for Donut I, II, III -->
+          <img src="/img/studio-glaze-1.png" alt="" class="studio__layer studio__slot" id="studio-slot-1" aria-hidden="true" />
+          <img src="/img/studio-glaze-2.png" alt="" class="studio__layer studio__slot" id="studio-slot-2" aria-hidden="true" />
+          <img src="/img/studio-glaze-3.png" alt="" class="studio__layer studio__slot" id="studio-slot-3" aria-hidden="true" />
+
+          <!-- Ceramic Glaze Tasting Bowls on Lower-Right Limestone Surface -->
+          <img src="/img/studio-bowl-1.png" alt="" class="studio__layer studio__lying" id="studio-lying-1" aria-hidden="true" />
+          <img src="/img/studio-bowl-2.png" alt="" class="studio__layer studio__lying" id="studio-lying-2" aria-hidden="true" />
+          <img src="/img/studio-bowl-3.png" alt="" class="studio__layer studio__lying" id="studio-lying-3" aria-hidden="true" />
+
+          <!-- Interactive Accessible Hitboxes for the 3 Glaze Bowls -->
+          <button type="button" class="studio__hit" data-tube="1" style="left: 67.2%; top: 62.6%; width: 11%; height: 8.5%;" aria-label="Dip Donut V (I) in Ceremonial Uji Matcha Glaze">
+            <span class="studio__hit-label t12">UJI MATCHA (I)</span>
+          </button>
+          <button type="button" class="studio__hit" data-tube="2" style="left: 78.7%; top: 66.8%; width: 11%; height: 8.5%;" aria-label="Dip Donut V (II) in 72% Dark Cacao Ganache">
+            <span class="studio__hit-label t12">DARK CACAO (II)</span>
+          </button>
+          <button type="button" class="studio__hit" data-tube="3" style="left: 77.2%; top: 58.6%; width: 10.6%; height: 7.5%;" aria-label="Dip Donut V (III) in Tahitian Vanilla and Gold Glaze">
+            <span class="studio__hit-label t12">VANILLA GOLD (III)</span>
+          </button>
+
+          <!-- Horizon HUD -->
+          <div class="studio__hud t12">
+            <span>DONUT V (III)</span>
+            <span id="studio-prompt">CLICK A GLAZE</span>
+            <span id="studio-status">FINISH THE TRIO</span>
+            <div class="studio__hud-right">
+              <button type="button" class="studio__reset t12 is-hidden" id="studio-reset">RESET</button>
+              <a href="/donut-v?size=I" class="link-under t12" data-nav="pdp" data-size="I">ORDER FROM €8</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MONUMENTAL FOOTER (#0f1c17 Deep Pine) -->
+      <footer class="footer" id="footer">
+        <div class="footer__top">
+          <p class="footer__copy t12">©2026. VELA ATELIER.</p>
+
+          <nav class="footer__menu" aria-label="Footer pastries">
+            <div class="fmenu__group">
+              <span class="fmenu__n t12">01</span>
+              <a href="/donut-v?size=III" class="fmenu__name t12" data-nav="pdp" data-size="III">DONUT V</a>
+              <ul class="fmenu__sub">
+                <li><a href="/donut-v?size=III" class="t12" data-nav="pdp" data-size="III">D. V III</a></li>
+                <li><a href="/donut-v?size=II" class="t12" data-nav="pdp" data-size="II">D. V II</a></li>
+                <li><a href="/donut-v?size=I" class="t12" data-nav="pdp" data-size="I">D. V I</a></li>
+              </ul>
+            </div>
+
+            <div class="fmenu__group is-disabled" data-soon>
+              <span class="fmenu__n t12">02</span>
+              <span class="fmenu__name t12">CHOUX V</span>
+              <ul class="fmenu__sub">
+                <li class="t12">C. V PETIT</li>
+                <li class="t12">C. V CLASSIQUE</li>
+                <li class="t12">C. V GRAND</li>
+              </ul>
+            </div>
+
+            <div class="fmenu__group is-disabled" data-soon>
+              <span class="fmenu__n t12">03</span>
+              <span class="fmenu__name t12">CANELÉ V</span>
+              <ul class="fmenu__sub">
+                <li class="t12">N. V MINI</li>
+                <li class="t12">N. V CLASSIQUE</li>
+                <li class="t12">N. V COFFRET</li>
+              </ul>
+            </div>
+          </nav>
+
+          <div class="footer__links">
+            <button type="button" class="footer__link t12" data-open-store>STORE</button>
+            <a href="/about" class="footer__link t12" data-nav="about">ABOUT</a>
+          </div>
+
+          <p class="footer__credit t12">DAILY BATCH</p>
+        </div>
+
+        <div class="footer__lockup" id="footer-lockup">
+          <canvas class="footer__mark" id="footer-mark" aria-hidden="true"></canvas>
+          <span class="footer__wordmark" aria-label="VELA">VELA</span>
+        </div>
+      </footer>
+    </main>
+
+    <!-- OVERLAY 1: TOP STORE DRAWER -->
+    <div class="store-drawer" id="store-drawer" role="dialog" aria-modal="true" aria-label="Store collection" hidden>
+      <div class="store-drawer__scrim" data-close-store></div>
+      <div class="store-drawer__panel">
+        <div class="store-drawer__bar">
+          <button type="button" class="t12 store-drawer__close" data-close-store>CLOSE</button>
+        </div>
+        <div class="store-drawer__body">
+          <div class="store-drawer__label t12">COLLECTION (03):</div>
+          <div class="store-drawer__cards">
+            <a href="/donut-v?size=III" class="store-card store-card--1" data-nav="pdp" data-size="III">
+              <div class="store-card__img"><img src="/img/donut-34.png" alt="01 Donut V" /></div>
+              <p class="t12">01 &nbsp;DONUT V</p>
+              <p class="t12s is-grey">Dimensions:<br />⌀ 106 × H 54 mm</p>
+            </a>
+            <div class="store-card store-card--2 is-disabled" data-soon aria-disabled="true">
+              <div class="store-card__img"><img src="/img/collection-choux.png" alt="02 Choux V" /></div>
+              <p class="t12">02 &nbsp;CHOUX V</p>
+              <p class="t12s is-grey">Dimensions:<br />⌀ 74 × H 62 mm</p>
+            </div>
+            <div class="store-card store-card--3 is-disabled" data-soon aria-disabled="true">
+              <div class="store-card__img"><img src="/img/collection-canele.png" alt="03 Canelé V" /></div>
+              <p class="t12">03 &nbsp;CANELÉ V</p>
+              <p class="t12s is-grey">Dimensions:<br />⌀ 55 × H 58 mm</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OVERLAY 2: 3-COLUMN FIXED/SCROLL PRODUCT DETAIL PAGE (/donut-v) -->
+    <section class="pdp" id="pdp" aria-label="Donut V product details" hidden>
+      <div class="pdp__layout">
+        <aside class="pdp__left">
+          <div class="pdp__left-top">
+            <h2 class="pdp__title t12" id="pdp-title">DONUT V (III)</h2>
+            <div class="pdp__opts">
+              <span class="t12s is-grey">Editions:</span>
+              <div class="pdp__radios" role="radiogroup" aria-label="Select Donut V edition">
+                <button type="button" class="pdp__opt t12" role="radio" aria-checked="false" data-pdp-size="I">(I)</button>
+                <button type="button" class="pdp__opt t12" role="radio" aria-checked="false" data-pdp-size="II">(II)</button>
+                <button type="button" class="pdp__opt t12 is-active" role="radio" aria-checked="true" data-pdp-size="III">(III)</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="pdp__thumbs" id="pdp-thumbs" aria-label="Gallery thumbnails"></div>
+        </aside>
+
+        <div class="pdp__center" id="pdp-center" data-lenis-prevent>
+          <span class="pdp__counter t12s is-grey" id="pdp-counter">1/6</span>
+          <div class="pdp__stack" id="pdp-stack"></div>
+          <div class="pdp__mob-dots" id="pdp-mob-dots" aria-hidden="true"></div>
+        </div>
+
+        <aside class="pdp__right">
+          <div class="pdp__right-body">
+            <p class="pdp__price t12" id="pdp-price">€14</p>
+            <p class="pdp__copy t12s" id="pdp-copy"></p>
+
+            <div class="pdp__dims">
+              <p class="t12s">Dimensions</p>
+              <svg class="pdp__cad" id="pdp-cad" viewBox="0 0 300 220" fill="none" aria-label="Isometric torus dimension drawing"></svg>
+            </div>
+
+            <div class="pdp__accordions">
+              <div class="pdp__acc">
+                <button type="button" class="pdp__acc-btn t12s" aria-expanded="false">
+                  <span>Ingredients &amp; Craft</span>
+                  <span class="pdp__acc-sign">+</span>
+                </button>
+                <div class="pdp__acc-panel" hidden>
+                  <p class="t12s">Stone-milled Normandy flour, cultured French butter, pasture eggs, and natural levain fermented cold for 48 hours. Hand-cut into exact architectural rings, fried to a crisp golden proof-line, and glazed warm in Uji matcha, 72% dark cacao ganache, or Tahitian vanilla bean with 24k gold leaf.</p>
+                </div>
+              </div>
+
+              <div class="pdp__acc">
+                <button type="button" class="pdp__acc-btn t12s" aria-expanded="false">
+                  <span>Freshness &amp; Pickup</span>
+                  <span class="pdp__acc-sign">+</span>
+                </button>
+                <div class="pdp__acc-panel" hidden>
+                  <p class="t12s">Donut V is baked in two limited morning batches daily at 08:30 and 11:30. Reserve your tasting box on the morning allocation list for atelier pickup or local chilled courier delivery in rigid linen-bound boxes.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pdp__dock">
+            <div class="pdp__mob-row">
+              <span class="t12" id="pdp-mob-price">€14</span>
+              <div class="pdp__mob-opts" role="radiogroup" aria-label="Mobile edition selector">
+                <button type="button" class="pdp__opt t12" data-pdp-size="I">(I)</button>
+                <button type="button" class="pdp__opt t12" data-pdp-size="II">(II)</button>
+                <button type="button" class="pdp__opt t12 is-active" data-pdp-size="III">(III)</button>
+              </div>
+            </div>
+            <button type="button" class="pdp__add t12" id="pdp-add">
+              <span class="roll" data-text="ADD TO CART"><span>ADD TO CART</span></span>
+            </button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- OVERLAY 3: RIGHT CART SLIDE-OVER DRAWER -->
+    <aside class="cart-drawer" id="cart-drawer" role="dialog" aria-modal="true" aria-label="Shopping cart" hidden>
+      <div class="cart-drawer__scrim" data-close-cart></div>
+      <div class="cart-drawer__panel">
+        <div class="cart-drawer__head">
+          <button type="button" class="t12 cart-drawer__close" data-close-cart>CLOSE</button>
+          <span class="t12">CART ( <span class="cart-count">0</span> )</span>
+        </div>
+
+        <div class="cart-drawer__items" id="cart-items" data-lenis-prevent></div>
+
+        <div class="cart-drawer__foot">
+          <div class="cart-drawer__sub">
+            <span class="t12s">Subtotal</span>
+            <span class="t12" id="cart-subtotal">€0</span>
+          </div>
+          <button type="button" class="cart__go t12" id="btn-checkout">
+            <span class="roll" data-text="CHECKOUT"><span>CHECKOUT</span></span>
+          </button>
+          <button type="button" class="cart__on t12" data-close-cart>
+            <span class="roll" data-text="CONTINUE SHOPPING"><span>CONTINUE SHOPPING</span></span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- OVERLAY 4: FULL-SCREEN MORNING BATCH RESERVATION CHECKOUT (/checkout) -->
+    <section class="checkout" id="checkout-view" aria-label="Morning batch checkout" hidden>
+      <div class="checkout__grid">
+        <div class="checkout__left">
+          <a href="/donut-v?size=III" class="t12 checkout__back" data-nav="pdp" data-size="III">DONUT V (III)</a>
+        </div>
+
+        <div class="checkout__center">
+          <div class="checkout__head-row t12s">
+            <span>Checkout</span>
+            <span class="checkout__h-qty is-grey">Qty</span>
+            <span class="checkout__h-price is-grey">Price</span>
+          </div>
+          <div class="checkout__items" id="checkout-items"></div>
+        </div>
+
+        <div class="checkout__right">
+          <div class="checkout__summary">
+            <div class="checkout__sum-row">
+              <span class="t12s">Subtotal</span>
+              <span class="t12" id="co-subtotal">€0</span>
+            </div>
+            <div class="checkout__sum-row">
+              <span class="t12s">Pay Now</span>
+              <span class="t12">€0</span>
+            </div>
+          </div>
+
+          <p class="checkout__note t12s">
+            Donut V is fermented for 48 hours and glazed to order in numbered morning batches. Reserve your box now and pay upon atelier pickup or dispatch confirmation.
+          </p>
+          <p class="checkout__note t12s">
+            We will only write to you with your fresh batch pickup window for Donut V.
+          </p>
+
+          <form class="checkout__form" id="checkout-form" novalidate>
+            <label class="co-field">
+              <span class="visually-hidden">Name</span>
+              <input type="text" name="name" id="co-name" class="t12s" placeholder="Name" required autocomplete="name" />
+            </label>
+            <label class="co-field">
+              <span class="visually-hidden">Email</span>
+              <input type="email" name="email" id="co-email" class="t12s" placeholder="Email" required autocomplete="email" />
+            </label>
+            <p class="co-feedback t12s" id="co-feedback" role="status" aria-live="polite"></p>
+            <button type="submit" class="co__send t12" id="co-submit">
+              <span class="roll" data-text="RESERVE MORNING BATCH"><span>RESERVE MORNING BATCH</span></span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- OVERLAY 5: FULL-SCREEN ABOUT MODAL (/about) -->
+    <section class="about" id="about-view" role="dialog" aria-modal="true" aria-label="About VELA" hidden>
+      <div class="about__grid">
+        <div class="about__row-main">
+          <p class="about__label t12s">About Us:</p>
+          <div class="about__prose t12s">
+            <p>At VELA, our fascination with design has never been limited to permanent objects.</p>
+            <p>With roots in architecture and culinary craft, we have always been drawn to the tension between geometry, fermentation, glaze reflection, and warmth. Over time, that sensibility extended beyond galleries and into ephemeral patisserie.</p>
+            <p>Inspired by modernism and pure single-origin ingredients, we explore how elementary form, patient 48-hour dough proofing, and luminous glazes can transform a familiar donut into a quiet daily ceremony.</p>
+            <p>For us, VELA is another way to express what we have always loved about form. Only this time, it is meant to be shared warm.</p>
+          </div>
+          <div class="about__col-r">
+            <div class="about__signoff">
+              <span class="t12">A LOVE FOR FORM, IN EVERY CRUMB.</span>
+              <span class="about__mark" id="about-mark"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="about__row-objects">
+          <p class="about__label t12s">Pastries:</p>
+          <ul class="about__objects t12s">
+            <li><a href="/donut-v?size=III" data-nav="pdp" data-size="III">Donut V (III)</a></li>
+            <li class="is-grey">Choux V (Coming Soon)</li>
+            <li class="is-grey">Canelé V (Coming Soon)</li>
+          </ul>
+        </div>
+
+        <p class="about__legal t12 is-grey">©2026. VELA ATELIER.</p>
+      </div>
+    </section>
+
+    <!-- OVERLAY 6: MOBILE FULL-SCREEN MENU -->
+    <nav class="mob-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Mobile navigation" hidden>
+      <div class="mob-menu__body">
+        <div class="mob-menu__group">
+          <button type="button" class="mob-menu__big" data-nav="pdp" data-size="III">Store</button>
+          <ul class="mob-menu__sub">
+            <li><a href="/donut-v?size=III" data-nav="pdp" data-size="III">Donut V</a></li>
+            <li class="is-grey">Choux V (Coming soon)</li>
+            <li class="is-grey">Canelé V (Coming soon)</li>
+          </ul>
+        </div>
+
+        <a href="/about" class="mob-menu__big" data-nav="about">About</a>
+      </div>
+      <p class="mob-menu__legal t12 is-grey">©2026. VELA ATELIER.</p>
+    </nav>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
